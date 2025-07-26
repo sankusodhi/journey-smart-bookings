@@ -34,11 +34,11 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="journey" size="lg" className="text-lg px-8 py-4">
+              <Button variant="journey" size="lg" className="text-lg px-8 py-4" onClick={() => window.location.href = '/search-results'}>
                 <Search className="w-5 h-5 mr-2" />
                 Search Buses
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white/20">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-4 bg-white/10 border-white/30 text-white hover:bg-white/20" onClick={() => window.location.href = '/tracking'}>
                 Track My Bus
               </Button>
             </div>
@@ -105,7 +105,7 @@ const HeroSection = () => {
                   </div>
                 </div>
 
-                <Button variant="hero" size="lg" className="w-full text-lg py-4">
+                <Button variant="hero" size="lg" className="w-full text-lg py-4" onClick={() => window.location.href = '/search-results'}>
                   <Search className="w-5 h-5 mr-2" />
                   Search Buses
                 </Button>

@@ -21,10 +21,10 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-colors">Bus Tickets</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">Track Bus</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">Offers</a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">Help</a>
+            <a href="/search-results" className="text-foreground hover:text-primary transition-colors">Bus Tickets</a>
+            <a href="/tracking" className="text-foreground hover:text-primary transition-colors">Track Bus</a>
+            <a href="/#offers" className="text-foreground hover:text-primary transition-colors">Offers</a>
+            <a href="/#features" className="text-foreground hover:text-primary transition-colors">Help</a>
           </nav>
 
           {/* User Actions */}
