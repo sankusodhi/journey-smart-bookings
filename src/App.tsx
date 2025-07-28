@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import SearchResults from "./pages/SearchResults";
 import SeatSelection from "./pages/SeatSelection";
 import PassengerDetails from "./pages/PassengerDetails";
+import Payment from "./pages/Payment";
 import BusTracking from "./pages/BusTracking";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/search-results" element={<SearchResults />} />
           <Route path="/select-seats/:busId" element={<SeatSelection />} />
           <Route path="/passenger-details/:busId" element={<PassengerDetails />} />
+          <Route path="/payment/:busId" element={<Payment />} />
           <Route path="/tracking" element={<BusTracking />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

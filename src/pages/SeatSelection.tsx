@@ -1,28 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, MapPin, Clock, User, Wifi, Zap, Snowflake } from "lucide-react";
 import Header from "@/components/Header";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const SeatSelection = () => {
   const { busId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [busData, setBusData] = useState<any>(null);
+  const [bookedSeats, setBookedSeats] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock bus data - in real app, fetch based on busId
-  const busData = {
-    id: 1,
-    operator: "IntrCity SmartBus",
-    route: "Delhi → Mumbai",
-    departure: "22:30",
-    arrival: "14:30+1",
-    duration: "16h 00m",
-    price: 1299,
-    busType: "AC Sleeper",
-    amenities: ["wifi", "charging", "ac", "water"]
+  useEffect(() => {
+    fetchBusData();
+    fetchBookedSeats();
+  }, [busId]);
+
+  const fetchBusData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('buses')
+        .select('*')
+        .eq('id', parseInt(busId!))
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch bus details",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setBusData(data);
+    } catch (error) {
+      console.error('Error fetching bus data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const fetchBookedSeats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('bus_id', parseInt(busId!));
+
+      if (error) {
+        console.error('Error fetching bookings:', error);
+        return;
+      }
+
+      // Extract seat numbers from bookings - for now we'll use a mock pattern
+      // In a real system, you'd have a seats column in bookings table
+      const seats = data?.map((_, index) => `L${index + 1}`) || [];
+      setBookedSeats(seats);
+    } catch (error) {
+      console.error('Error fetching booked seats:', error);
+    }
+  };
+
+  if (loading || !busData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-journey mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading bus details...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Seat layout - Lower and Upper deck
   const seatLayout = {
@@ -48,7 +103,6 @@ const SeatSelection = () => {
     ]
   };
 
-  const bookedSeats = ["L2", "L7", "L15", "U5", "U12", "U20"];
   const femaleSeats = ["L1", "L9", "U1", "U9"];
 
   const getSeatStatus = (seatNumber: string) => {
@@ -80,7 +134,7 @@ const SeatSelection = () => {
     }
   };
 
-  const totalPrice = selectedSeats.length * busData.price;
+  const totalPrice = selectedSeats.length * Number(busData.price);
 
   const SeatGrid = ({ deck, deckName }: { deck: string[][], deckName: string }) => (
     <div className="bg-white rounded-lg p-4 border">
@@ -126,23 +180,35 @@ const SeatSelection = () => {
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{busData.operator}</h1>
-              <p className="text-white/90">{busData.busType} • {busData.route}</p>
+              <h1 className="text-2xl font-bold">{busData.bus_name}</h1>
+              <p className="text-white/90">AC Sleeper • {busData.source} → {busData.destination}</p>
             </div>
           </div>
           
           <div className="grid md:grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-xl font-bold">{busData.departure}</div>
-              <div className="text-white/90">Delhi</div>
+              <div className="text-xl font-bold">
+                {new Date(busData.departure_time).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+              <div className="text-white/90">{busData.source}</div>
             </div>
             <div>
               <Clock className="w-5 h-5 mx-auto mb-1" />
-              <div className="text-white/90">{busData.duration}</div>
+              <div className="text-white/90">
+                {Math.round((new Date(busData.arrival_time).getTime() - new Date(busData.departure_time).getTime()) / (1000 * 60 * 60))}h 00m
+              </div>
             </div>
             <div>
-              <div className="text-xl font-bold">{busData.arrival}</div>
-              <div className="text-white/90">Mumbai</div>
+              <div className="text-xl font-bold">
+                {new Date(busData.arrival_time).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+              <div className="text-white/90">{busData.destination}</div>
             </div>
           </div>
         </div>
@@ -252,7 +318,7 @@ const SeatSelection = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Base Fare:</span>
-                      <span>₹{busData.price} × {selectedSeats.length}</span>
+                      <span>₹{Number(busData.price)} × {selectedSeats.length}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Taxes & Fees:</span>
@@ -269,7 +335,7 @@ const SeatSelection = () => {
                   <Button 
                     variant="hero" 
                     className="w-full mb-4"
-                    onClick={() => navigate(`/passenger-details/${busId}`)}
+                    onClick={() => navigate(`/passenger-details/${busId}?seats=${selectedSeats.join(',')}`)}
                   >
                     Continue to Passenger Details
                   </Button>

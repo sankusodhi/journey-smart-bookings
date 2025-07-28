@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,25 +7,70 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, User, Mail, Phone, Calendar, MapPin } from "lucide-react";
 import Header from "@/components/Header";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const PassengerDetails = () => {
   const { busId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   
   const [passengers, setPassengers] = useState([
     { name: "", age: "", gender: "male", email: "", phone: "" }
   ]);
+  const [busData, setBusData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
 
-  // Mock selected seats and bus data
-  const selectedSeats = ["L5", "L6"];
-  const busData = {
-    operator: "IntrCity SmartBus",
-    route: "Delhi → Mumbai",
-    departure: "22:30",
-    arrival: "14:30+1",
-    date: "26 Jul 2024",
-    price: 1299
+  const selectedSeats = searchParams.get('seats')?.split(',') || [];
+
+  useEffect(() => {
+    fetchBusData();
+    // Initialize passengers based on selected seats
+    if (selectedSeats.length > 0) {
+      setPassengers(
+        selectedSeats.map(() => ({ name: "", age: "", gender: "male", email: "", phone: "" }))
+      );
+    }
+  }, [busId]);
+
+  const fetchBusData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('buses')
+        .select('*')
+        .eq('id', parseInt(busId!))
+        .single();
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch bus details",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setBusData(data);
+    } catch (error) {
+      console.error('Error fetching bus data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading || !busData) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-journey mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading passenger details...</p>
+        </div>
+      </div>
+    );
+  }
 
   const addPassenger = () => {
     if (passengers.length < selectedSeats.length) {
@@ -45,13 +90,27 @@ const PassengerDetails = () => {
     }
   };
 
-  const totalAmount = selectedSeats.length * busData.price + Math.round(selectedSeats.length * busData.price * 0.05);
+  const totalAmount = selectedSeats.length * Number(busData.price) + Math.round(selectedSeats.length * Number(busData.price) * 0.05);
 
   const handleContinue = () => {
     // Validate form data
-    const isValid = passengers.every(p => p.name && p.age && p.email && p.phone);
+    const isValid = passengers.every(p => p.name && p.age) && contactEmail && contactPhone;
     if (isValid) {
-      navigate(`/payment/${busId}`);
+      const passengerData = {
+        passengers,
+        contactEmail,
+        contactPhone,
+        selectedSeats,
+        busData,
+        totalAmount
+      };
+      navigate(`/payment/${busId}?seats=${selectedSeats.join(',')}&contact=${encodeURIComponent(JSON.stringify({ email: contactEmail, phone: contactPhone }))}&passengers=${encodeURIComponent(JSON.stringify(passengers))}`);
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
     }
   };
 
@@ -113,6 +172,8 @@ const PassengerDetails = () => {
                     id="contact-email" 
                     type="email" 
                     placeholder="your@email.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
                     className="mt-1"
                   />
                   <p className="text-xs text-muted-foreground mt-1">Your ticket will be sent here</p>
@@ -123,6 +184,8 @@ const PassengerDetails = () => {
                     id="contact-phone" 
                     type="tel" 
                     placeholder="+91 98765 43210"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
                     className="mt-1"
                   />
                   <p className="text-xs text-muted-foreground mt-1">For booking updates</p>
@@ -247,23 +310,33 @@ const PassengerDetails = () => {
               
               <div className="space-y-4 mb-6">
                 <div>
-                  <div className="font-semibold">{busData.operator}</div>
-                  <div className="text-sm text-muted-foreground">{busData.route}</div>
+                  <div className="font-semibold">{busData.bus_name}</div>
+                  <div className="text-sm text-muted-foreground">{busData.source} → {busData.destination}</div>
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="w-4 h-4 text-journey" />
-                  <span>{busData.date}</span>
+                  <span>{new Date(busData.departure_time).toLocaleDateString()}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="font-semibold">{busData.departure}</div>
-                    <div className="text-muted-foreground">Delhi</div>
+                    <div className="font-semibold">
+                      {new Date(busData.departure_time).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                    <div className="text-muted-foreground">{busData.source}</div>
                   </div>
                   <div>
-                    <div className="font-semibold">{busData.arrival}</div>
-                    <div className="text-muted-foreground">Mumbai</div>
+                    <div className="font-semibold">
+                      {new Date(busData.arrival_time).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                    <div className="text-muted-foreground">{busData.destination}</div>
                   </div>
                 </div>
 
@@ -274,11 +347,11 @@ const PassengerDetails = () => {
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>Base Fare:</span>
-                    <span>₹{busData.price} × {selectedSeats.length}</span>
+                    <span>₹{Number(busData.price)} × {selectedSeats.length}</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>Taxes & Fees:</span>
-                    <span>₹{Math.round(selectedSeats.length * busData.price * 0.05)}</span>
+                    <span>₹{Math.round(selectedSeats.length * Number(busData.price) * 0.05)}</span>
                   </div>
                   <div className="border-t pt-2">
                     <div className="flex justify-between font-bold text-lg">
