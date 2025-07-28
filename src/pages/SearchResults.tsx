@@ -2,84 +2,60 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { MapPin, Clock, Star, Wifi, Zap, Snowflake, Users } from "lucide-react";
+import { Clock, Star, Wifi, Zap, Snowflake, Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
+import { useRealtimeBuses } from "@/hooks/useRealtimeBuses";
 
 const SearchResults = () => {
   const navigate = useNavigate();
   const [selectedSort, setSelectedSort] = useState("departure");
+  const { buses: realtimeBuses, loading, error } = useRealtimeBuses();
 
-  const buses = [
-    {
-      id: 1,
-      operator: "IntrCity SmartBus",
-      route: "Delhi → Mumbai",
-      departure: "22:30",
-      arrival: "14:30+1",
-      duration: "16h 00m",
-      price: 1299,
-      originalPrice: 1599,
-      discount: 19,
-      rating: 4.2,
-      reviews: 1847,
-      seatsLeft: 12,
-      busType: "AC Sleeper",
-      amenities: ["wifi", "charging", "ac", "water"],
-      pickupPoints: 3,
-      dropPoints: 4,
-      isPopular: true
-    },
-    {
-      id: 2,
-      operator: "VRL Travels",
-      route: "Delhi → Mumbai",
-      departure: "20:15",
-      arrival: "12:45+1",
-      duration: "16h 30m",
-      price: 999,
-      originalPrice: 1299,
-      discount: 23,
-      rating: 4.0,
-      reviews: 892,
-      seatsLeft: 8,
-      busType: "AC Seater",
-      amenities: ["wifi", "charging", "ac"],
-      pickupPoints: 5,
-      dropPoints: 6,
-      isPopular: false
-    },
-    {
-      id: 3,
-      operator: "RedBus Express",
-      route: "Delhi → Mumbai",
-      departure: "21:00",
-      arrival: "13:30+1",
-      duration: "16h 30m",
-      price: 1499,
-      originalPrice: 1799,
-      discount: 17,
-      rating: 4.5,
-      reviews: 2156,
-      seatsLeft: 4,
-      busType: "Volvo AC Sleeper",
-      amenities: ["wifi", "charging", "ac", "water", "blanket"],
-      pickupPoints: 2,
-      dropPoints: 3,
-      isPopular: true
-    }
-  ];
-
-  const getAmenityIcon = (amenity: string) => {
-    switch (amenity) {
-      case "wifi": return <Wifi className="w-4 h-4" />;
-      case "charging": return <Zap className="w-4 h-4" />;
-      case "ac": return <Snowflake className="w-4 h-4" />;
-      case "water": return "💧";
-      case "blanket": return "🛏️";
-      default: return null;
-    }
+  // Helper function to format time
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
+
+  // Helper function to calculate duration
+  const calculateDuration = (departure: string, arrival: string) => {
+    const dep = new Date(departure);
+    const arr = new Date(arrival);
+    const diffMs = arr.getTime() - dep.getTime();
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin" />
+          <span className="ml-2">Loading buses...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error loading buses: {error}</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,8 +66,8 @@ const SearchResults = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Delhi → Mumbai</h1>
-              <p className="text-white/90">Today, 26 Jul • {buses.length} buses found</p>
+              <h1 className="text-2xl font-bold mb-2">Live Bus Routes</h1>
+              <p className="text-white/90">Real-time data • {realtimeBuses.length} buses found</p>
             </div>
             <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
               Modify Search
@@ -126,41 +102,27 @@ const SearchResults = () => {
                 </div>
               </div>
 
-              {/* Bus Type */}
+              {/* Routes */}
               <div className="mb-6">
-                <h4 className="font-semibold mb-3">Bus Type</h4>
+                <h4 className="font-semibold mb-3">Routes</h4>
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2">
                     <input type="checkbox" className="rounded" />
-                    <span>AC Sleeper</span>
+                    <span>Geedam → Raipur</span>
                   </label>
                   <label className="flex items-center space-x-2">
                     <input type="checkbox" className="rounded" />
-                    <span>AC Seater</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
-                    <span>Non-AC Sleeper</span>
+                    <span>Bijapur → Raipur</span>
                   </label>
                 </div>
               </div>
 
-              {/* Departure Time */}
+              {/* Real-time Status */}
               <div className="mb-6">
-                <h4 className="font-semibold mb-3">Departure Time</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
-                    <span>6 AM - 12 PM</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
-                    <span>12 PM - 6 PM</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
-                    <span>6 PM - 12 AM</span>
-                  </label>
+                <h4 className="font-semibold mb-3">Status</h4>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-green-600">Live Updates Active</span>
                 </div>
               </div>
             </Card>
@@ -170,7 +132,7 @@ const SearchResults = () => {
           <div className="lg:col-span-3">
             {/* Sort Options */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">{buses.length} buses found</h2>
+              <h2 className="text-xl font-bold">{realtimeBuses.length} buses found</h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sort by:</span>
                 <Button 
@@ -187,79 +149,66 @@ const SearchResults = () => {
                 >
                   Price
                 </Button>
-                <Button 
-                  variant={selectedSort === "rating" ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setSelectedSort("rating")}
-                >
-                  Rating
-                </Button>
               </div>
             </div>
 
             {/* Bus Cards */}
             <div className="space-y-4">
-              {buses.map((bus) => (
+              {realtimeBuses.map((bus) => (
                 <Card key={bus.id} className="p-6 hover:shadow-glow transition-all duration-300">
                   <div className="grid md:grid-cols-6 gap-4 items-center">
                     {/* Operator & Route */}
                     <div className="md:col-span-2">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-bold text-lg">{bus.operator}</h3>
-                        {bus.isPopular && (
-                          <Badge variant="secondary" className="bg-journey/10 text-journey">
-                            Popular
-                          </Badge>
-                        )}
+                        <h3 className="font-bold text-lg">{bus.bus_name}</h3>
+                        <Badge variant="secondary" className="bg-green-100 text-green-700">
+                          Live
+                        </Badge>
                       </div>
-                      <p className="text-muted-foreground mb-1">{bus.busType}</p>
+                      <p className="text-muted-foreground mb-1">{bus.source} → {bus.destination}</p>
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">{bus.rating}</span>
-                        <span className="text-muted-foreground">({bus.reviews})</span>
+                        <span className="font-semibold">4.2</span>
+                        <span className="text-muted-foreground">(Real-time)</span>
                       </div>
                     </div>
 
                     {/* Timing */}
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{bus.departure}</div>
-                      <div className="text-sm text-muted-foreground">Delhi</div>
+                      <div className="text-2xl font-bold">{formatTime(bus.departure_time)}</div>
+                      <div className="text-sm text-muted-foreground">{bus.source}</div>
                       <div className="my-2">
                         <Clock className="w-4 h-4 mx-auto text-muted-foreground" />
-                        <div className="text-sm text-muted-foreground">{bus.duration}</div>
+                        <div className="text-sm text-muted-foreground">{calculateDuration(bus.departure_time, bus.arrival_time)}</div>
                       </div>
-                      <div className="text-2xl font-bold">{bus.arrival}</div>
-                      <div className="text-sm text-muted-foreground">Mumbai</div>
+                      <div className="text-2xl font-bold">{formatTime(bus.arrival_time)}</div>
+                      <div className="text-sm text-muted-foreground">{bus.destination}</div>
                     </div>
 
                     {/* Amenities */}
                     <div>
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {bus.amenities.map((amenity, index) => (
-                          <div key={index} className="flex items-center gap-1 text-sm text-muted-foreground">
-                            {getAmenityIcon(amenity)}
-                          </div>
-                        ))}
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Wifi className="w-4 h-4" />
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Zap className="w-4 h-4" />
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Snowflake className="w-4 h-4" />
+                        </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {bus.pickupPoints} Pickup • {bus.dropPoints} Drop
+                        Real-time tracking
                       </div>
                     </div>
 
                     {/* Price */}
                     <div className="text-center">
                       <div className="text-2xl font-bold">₹{bus.price}</div>
-                      {bus.originalPrice && (
-                        <div className="text-sm">
-                          <span className="line-through text-muted-foreground">₹{bus.originalPrice}</span>
-                          <Badge variant="secondary" className="ml-1 bg-green-100 text-green-700">
-                            {bus.discount}% OFF
-                          </Badge>
-                        </div>
-                      )}
                       <div className="text-sm text-muted-foreground mt-1">
                         <Users className="w-4 h-4 inline mr-1" />
-                        {bus.seatsLeft} seats left
+                        Available
                       </div>
                     </div>
 
@@ -268,9 +217,9 @@ const SearchResults = () => {
                       <Button 
                         variant="hero" 
                         className="w-full"
-                        onClick={() => navigate(`/select-seats/${bus.id}`)}
+                        onClick={() => navigate(`/payment/${bus.id}`)}
                       >
-                        Select Seats
+                        Book Now
                       </Button>
                       <Button variant="outline" size="sm" className="w-full">
                         View Details
@@ -280,6 +229,13 @@ const SearchResults = () => {
                 </Card>
               ))}
             </div>
+
+            {realtimeBuses.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground mb-4">No buses found for your search</p>
+                <Button onClick={() => window.location.reload()}>Refresh</Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
