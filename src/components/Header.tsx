@@ -1,7 +1,21 @@
 import { Button } from "./ui/button";
 import { Search, User, Menu, MapPin } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import AuthModal from "./AuthModal";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const handleAuthAction = () => {
+    if (user) {
+      signOut();
+    } else {
+      setShowAuthModal(true);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container mx-auto px-4">
@@ -29,9 +43,14 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="sm" className="hidden md:flex">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="hidden md:flex"
+              onClick={handleAuthAction}
+            >
               <User className="w-4 h-4 mr-2" />
-              Login/Signup
+              {user ? 'Logout' : 'Login/Signup'}
             </Button>
             <Button variant="hero" size="sm" className="hidden md:flex">
               Book Now
@@ -42,6 +61,11 @@ const Header = () => {
           </div>
         </div>
       </div>
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </header>
   );
 };
