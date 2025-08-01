@@ -3,6 +3,7 @@ import { Search, User, Menu, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import AuthModal from "./AuthModal";
+import WalletDisplay from "./WalletDisplay";
 
 const Header = () => {
   const { user, signOut } = useAuth();
@@ -43,6 +44,7 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">
+            <WalletDisplay />
             <Button 
               variant="ghost" 
               size="sm" 

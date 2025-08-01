@@ -7,17 +7,21 @@ import { ArrowLeft, CreditCard, Shield, Clock, CheckCircle2 } from "lucide-react
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import CongratulationsModal from "@/components/CongratulationsModal";
 
 const Payment = () => {
   const { busId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { addCoins } = useAuth();
   
   const [busData, setBusData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
+  const [showCongratulations, setShowCongratulations] = useState(false);
 
   const selectedSeats = searchParams.get('seats')?.split(',') || [];
   const contactInfo = searchParams.get('contact') ? JSON.parse(decodeURIComponent(searchParams.get('contact')!)) : {};
@@ -74,16 +78,18 @@ const Payment = () => {
       }
 
       setPaymentComplete(true);
+      
+      // Add 50 coins reward
+      addCoins(50);
+      
+      // Show congratulations modal
+      setShowCongratulations(true);
+      
       toast({
         title: "Payment Successful!",
-        description: "Your booking has been confirmed. A confirmation email will be sent shortly.",
+        description: "Your booking has been confirmed. You earned 50 coins!",
         variant: "default"
       });
-
-      // Redirect to home after 3 seconds
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
 
     } catch (error) {
       console.error('Error processing payment:', error);
@@ -311,6 +317,22 @@ const Payment = () => {
           </div>
         </div>
       </div>
+      
+      {/* Congratulations Modal */}
+      <CongratulationsModal
+        isOpen={showCongratulations}
+        onClose={() => {
+          setShowCongratulations(false);
+          setTimeout(() => navigate('/'), 1000);
+        }}
+        coinsEarned={50}
+        bookingDetails={{
+          busName: busData.bus_name,
+          route: `${busData.source} → ${busData.destination}`,
+          seats: selectedSeats,
+          amount: totalAmount
+        }}
+      />
     </div>
   );
 };
