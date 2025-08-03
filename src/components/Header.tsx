@@ -54,7 +54,7 @@ const Header = () => {
               <User className="w-4 h-4 mr-2" />
               {user ? 'Logout' : 'Login/Signup'}
             </Button>
-            <Button variant="hero" size="sm" className="hidden md:flex">
+            <Button variant="hero" size="sm" className="hidden md:flex" onClick={() => window.location.href = '/search-results'}>
               Book Now
             </Button>
             <Button variant="ghost" size="icon" className="md:hidden">
