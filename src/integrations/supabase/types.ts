@@ -17,28 +17,90 @@ export type Database = {
       bookings: {
         Row: {
           booked_at: string | null
-          bus_id: number | null
-          id: number
-          user_name: string | null
-          user_phone: string | null
+          booking_status: Database["public"]["Enums"]["booking_status"] | null
+          bus_id: number
+          coins_earned: number | null
+          coins_used: number | null
+          contact_info: Json
+          id: string
+          passenger_details: Json
+          payment_id: string | null
+          payment_status: string | null
+          selected_seats: string[]
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
           booked_at?: string | null
-          bus_id?: number | null
-          id?: never
-          user_name?: string | null
-          user_phone?: string | null
+          booking_status?: Database["public"]["Enums"]["booking_status"] | null
+          bus_id: number
+          coins_earned?: number | null
+          coins_used?: number | null
+          contact_info: Json
+          id?: string
+          passenger_details: Json
+          payment_id?: string | null
+          payment_status?: string | null
+          selected_seats: string[]
+          stripe_session_id?: string | null
+          total_amount: number
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
           booked_at?: string | null
-          bus_id?: number | null
-          id?: never
-          user_name?: string | null
-          user_phone?: string | null
+          booking_status?: Database["public"]["Enums"]["booking_status"] | null
+          bus_id?: number
+          coins_earned?: number | null
+          coins_used?: number | null
+          contact_info?: Json
+          id?: string
+          passenger_details?: Json
+          payment_id?: string | null
+          payment_status?: string | null
+          selected_seats?: string[]
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "bookings_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_seats: {
+        Row: {
+          bus_id: number
+          id: string
+          is_available: boolean | null
+          seat_number: string
+          seat_type: string | null
+        }
+        Insert: {
+          bus_id: number
+          id?: string
+          is_available?: boolean | null
+          seat_number: string
+          seat_type?: string | null
+        }
+        Update: {
+          bus_id?: number
+          id?: string
+          is_available?: boolean | null
+          seat_number?: string
+          seat_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_seats_bus_id_fkey"
             columns: ["bus_id"]
             isOneToOne: false
             referencedRelation: "buses"
@@ -106,45 +168,154 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_transactions: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coin_transactions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          coins: number | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
           phone: string | null
+          phone_verified: boolean | null
+          role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          coins?: number | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          phone_verified?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          coins?: number | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           phone?: string | null
+          phone_verified?: boolean | null
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      seat_locks: {
+        Row: {
+          bus_id: number
+          expires_at: string | null
+          id: string
+          locked_at: string | null
+          seat_number: string
+          user_id: string
+        }
+        Insert: {
+          bus_id: number
+          expires_at?: string | null
+          id?: string
+          locked_at?: string | null
+          seat_number: string
+          user_id: string
+        }
+        Update: {
+          bus_id?: number
+          expires_at?: string | null
+          id?: string
+          locked_at?: string | null
+          seat_number?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seat_locks_bus_id_fkey"
+            columns: ["bus_id"]
+            isOneToOne: false
+            referencedRelation: "buses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_coins_to_user: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_booking_id?: string
+          p_transaction_type?: string
+          p_description?: string
+        }
+        Returns: undefined
+      }
+      clean_expired_seat_locks: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      confirm_booking: {
+        Args: { p_booking_id: string; p_payment_id: string }
+        Returns: undefined
+      }
+      lock_seats: {
+        Args: { p_bus_id: number; p_seat_numbers: string[]; p_user_id: string }
+        Returns: boolean
+      }
+      release_seat_locks: {
+        Args: { p_bus_id: number; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      booking_status: "pending" | "confirmed" | "cancelled" | "refunded"
+      seat_status: "available" | "locked" | "booked"
+      user_role: "user" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -271,6 +442,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      booking_status: ["pending", "confirmed", "cancelled", "refunded"],
+      seat_status: ["available", "locked", "booked"],
+      user_role: ["user", "admin"],
+    },
   },
 } as const
