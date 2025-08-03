@@ -60,36 +60,32 @@ const Payment = () => {
     setProcessing(true);
     
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create payment session through Stripe
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
+        body: {
+          busId: busId!,
+          selectedSeats,
+          passengerDetails: passengers,
+          contactInfo,
+          totalAmount: totalAmount,
+          coinsUsed: 0
+        }
+      });
 
-      // Save booking to database
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert({
-          bus_id: parseInt(busId!),
-          user_name: contactInfo.email,
-          user_phone: contactInfo.phone,
-          booked_at: new Date().toISOString()
+      if (paymentError) {
+        console.error('Payment error:', paymentError);
+        toast({
+          title: "Payment Failed",
+          description: "There was an error processing your payment. Please try again.",
+          variant: "destructive",
         });
-
-      if (error) {
-        throw error;
+        return;
       }
 
-      setPaymentComplete(true);
-      
-      // Add 50 coins reward
-      addCoins(50);
-      
-      // Show congratulations modal
-      setShowCongratulations(true);
-      
-      toast({
-        title: "Payment Successful!",
-        description: "Your booking has been confirmed. You earned 50 coins!",
-        variant: "default"
-      });
+      // Redirect to Stripe checkout
+      if (paymentData?.url) {
+        window.location.href = paymentData.url;
+      }
 
     } catch (error) {
       console.error('Error processing payment:', error);

@@ -9,8 +9,11 @@ import SearchResults from "./pages/SearchResults";
 import SeatSelection from "./pages/SeatSelection";
 import PassengerDetails from "./pages/PassengerDetails";
 import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 import BusTracking from "./pages/BusTracking";
 import Auth from "./pages/Auth";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +32,9 @@ const App = () => (
             <Route path="/select-seats/:busId" element={<SeatSelection />} />
             <Route path="/passenger-details/:busId" element={<PassengerDetails />} />
             <Route path="/payment/:busId" element={<Payment />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/tracking" element={<BusTracking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
