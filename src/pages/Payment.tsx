@@ -10,6 +10,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import CongratulationsModal from "@/components/CongratulationsModal";
 
+// Add Razorpay types
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const Payment = () => {
   const { busId } = useParams();
   const navigate = useNavigate();
@@ -22,6 +29,7 @@ const Payment = () => {
   const [processing, setProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'razorpay'>('stripe');
 
   const selectedSeats = searchParams.get('seats')?.split(',') || [];
   const contactInfo = searchParams.get('contact') ? JSON.parse(decodeURIComponent(searchParams.get('contact')!)) : {};
@@ -56,45 +64,104 @@ const Payment = () => {
     }
   };
 
+  const processStripePayment = async () => {
+    const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
+      body: {
+        busId: busId!,
+        selectedSeats,
+        passengerDetails: passengers,
+        contactInfo,
+        totalAmount: totalAmount,
+        coinsUsed: 0
+      }
+    });
+
+    if (paymentError) {
+      throw new Error(paymentError.message || "Stripe payment failed");
+    }
+
+    if (paymentData?.url) {
+      window.location.href = paymentData.url;
+    }
+  };
+
+  const processRazorpayPayment = async () => {
+    // Load Razorpay script
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    await new Promise((resolve) => {
+      script.onload = resolve;
+    });
+
+    const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-payment', {
+      body: {
+        busId: busId!,
+        selectedSeats,
+        passengerDetails: passengers,
+        contactInfo,
+        totalAmount: totalAmount,
+        coinsUsed: 0
+      }
+    });
+
+    if (orderError) {
+      throw new Error(orderError.message || "Razorpay order creation failed");
+    }
+
+    const options = {
+      key: orderData.keyId,
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: 'Bus Booking',
+      description: `Bus ticket for ${busData.bus_name}`,
+      order_id: orderData.orderId,
+      handler: function (response: any) {
+        // Payment successful
+        toast({
+          title: "Payment Successful!",
+          description: "Your booking has been confirmed.",
+        });
+        setPaymentComplete(true);
+        setShowCongratulations(true);
+      },
+      prefill: {
+        name: contactInfo.name || '',
+        email: contactInfo.email || '',
+        contact: contactInfo.phone || ''
+      },
+      theme: {
+        color: '#2563eb'
+      },
+      modal: {
+        ondismiss: function() {
+          setProcessing(false);
+        }
+      }
+    };
+
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  };
+
   const processPayment = async () => {
     setProcessing(true);
     
     try {
-      // Create payment session through Stripe
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
-        body: {
-          busId: busId!,
-          selectedSeats,
-          passengerDetails: passengers,
-          contactInfo,
-          totalAmount: totalAmount,
-          coinsUsed: 0
-        }
-      });
-
-      if (paymentError) {
-        console.error('Payment error:', paymentError);
-        toast({
-          title: "Payment Failed",
-          description: "There was an error processing your payment. Please try again.",
-          variant: "destructive",
-        });
-        return;
+      if (selectedPaymentMethod === 'stripe') {
+        await processStripePayment();
+      } else {
+        await processRazorpayPayment();
       }
-
-      // Redirect to Stripe checkout
-      if (paymentData?.url) {
-        window.location.href = paymentData.url;
-      }
-
     } catch (error) {
       console.error('Error processing payment:', error);
       toast({
         title: "Payment Failed",
-        description: "There was an error processing your payment. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error processing your payment. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setProcessing(false);
     }
   };
@@ -190,12 +257,25 @@ const Payment = () => {
               </h3>
               
               <div className="space-y-4">
-                <div className="border border-journey bg-journey/5 rounded-lg p-4">
+                <div 
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'stripe' 
+                      ? 'border-journey bg-journey/5' 
+                      : 'border-border hover:border-journey/50'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('stripe')}
+                >
                   <div className="flex items-center gap-3">
-                    <input type="radio" name="payment" className="text-journey" defaultChecked />
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      className="text-journey" 
+                      checked={selectedPaymentMethod === 'stripe'}
+                      onChange={() => setSelectedPaymentMethod('stripe')}
+                    />
                     <div className="flex-1">
-                      <div className="font-semibold">Demo Payment</div>
-                      <div className="text-sm text-muted-foreground">For demonstration purposes</div>
+                      <div className="font-semibold">Stripe</div>
+                      <div className="text-sm text-muted-foreground">Credit/Debit Cards, International</div>
                     </div>
                     <Badge variant="outline" className="bg-green-50 text-green-700">
                       <Shield className="w-3 h-3 mr-1" />
@@ -204,14 +284,30 @@ const Payment = () => {
                   </div>
                 </div>
 
-                <div className="border rounded-lg p-4 opacity-50">
+                <div 
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'razorpay' 
+                      ? 'border-journey bg-journey/5' 
+                      : 'border-border hover:border-journey/50'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('razorpay')}
+                >
                   <div className="flex items-center gap-3">
-                    <input type="radio" name="payment" disabled />
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      className="text-journey"
+                      checked={selectedPaymentMethod === 'razorpay'}
+                      onChange={() => setSelectedPaymentMethod('razorpay')}
+                    />
                     <div className="flex-1">
-                      <div className="font-semibold">Credit/Debit Card</div>
-                      <div className="text-sm text-muted-foreground">Visa, Mastercard, RuPay</div>
+                      <div className="font-semibold">Razorpay</div>
+                      <div className="text-sm text-muted-foreground">UPI, Cards, Net Banking, Wallets</div>
                     </div>
-                    <span className="text-xs text-muted-foreground">Coming Soon</span>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Indian
+                    </Badge>
                   </div>
                 </div>
 
@@ -219,8 +315,8 @@ const Payment = () => {
                   <div className="flex items-center gap-3">
                     <input type="radio" name="payment" disabled />
                     <div className="flex-1">
-                      <div className="font-semibold">UPI</div>
-                      <div className="text-sm text-muted-foreground">Pay using UPI apps</div>
+                      <div className="font-semibold">PhonePe / GPay</div>
+                      <div className="text-sm text-muted-foreground">Quick UPI payments</div>
                     </div>
                     <span className="text-xs text-muted-foreground">Coming Soon</span>
                   </div>

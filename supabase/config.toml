@@ -37,5 +37,8 @@ security_update_password_require_reauthentication = true
 [functions.create-payment]
 verify_jwt = true
 
+[functions.create-razorpay-payment]
+verify_jwt = true
+
 [functions.stripe-webhook]
 verify_jwt = false
