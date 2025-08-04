@@ -29,7 +29,7 @@ const Payment = () => {
   const [processing, setProcessing] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'razorpay'>('stripe');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'razorpay' | 'upi' | 'cards' | 'netbanking'>('razorpay');
 
   const selectedSeats = searchParams.get('seats')?.split(',') || [];
   const contactInfo = searchParams.get('contact') ? JSON.parse(decodeURIComponent(searchParams.get('contact')!)) : {};
@@ -286,6 +286,87 @@ const Payment = () => {
 
                 <div 
                   className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'upi' 
+                      ? 'border-journey bg-journey/5' 
+                      : 'border-border hover:border-journey/50'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('upi')}
+                >
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      className="text-journey"
+                      checked={selectedPaymentMethod === 'upi'}
+                      onChange={() => setSelectedPaymentMethod('upi')}
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold">UPI / GPay / PhonePe</div>
+                      <div className="text-sm text-muted-foreground">Quick UPI payments</div>
+                    </div>
+                    <Badge variant="outline" className="bg-green-50 text-green-700">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Instant
+                    </Badge>
+                  </div>
+                </div>
+
+                <div 
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'cards' 
+                      ? 'border-journey bg-journey/5' 
+                      : 'border-border hover:border-journey/50'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('cards')}
+                >
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      className="text-journey"
+                      checked={selectedPaymentMethod === 'cards'}
+                      onChange={() => setSelectedPaymentMethod('cards')}
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold">Credit/Debit Cards</div>
+                      <div className="text-sm text-muted-foreground">Visa, Mastercard, RuPay</div>
+                    </div>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Secure
+                    </Badge>
+                  </div>
+                </div>
+
+                <div 
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPaymentMethod === 'netbanking' 
+                      ? 'border-journey bg-journey/5' 
+                      : 'border-border hover:border-journey/50'
+                  }`}
+                  onClick={() => setSelectedPaymentMethod('netbanking')}
+                >
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="payment" 
+                      className="text-journey"
+                      checked={selectedPaymentMethod === 'netbanking'}
+                      onChange={() => setSelectedPaymentMethod('netbanking')}
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold">Net Banking</div>
+                      <div className="text-sm text-muted-foreground">All major banks</div>
+                    </div>
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Banking
+                    </Badge>
+                  </div>
+                </div>
+
+                <div 
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
                     selectedPaymentMethod === 'razorpay' 
                       ? 'border-journey bg-journey/5' 
                       : 'border-border hover:border-journey/50'
@@ -301,24 +382,13 @@ const Payment = () => {
                       onChange={() => setSelectedPaymentMethod('razorpay')}
                     />
                     <div className="flex-1">
-                      <div className="font-semibold">Razorpay</div>
+                      <div className="font-semibold">All Payment Options</div>
                       <div className="text-sm text-muted-foreground">UPI, Cards, Net Banking, Wallets</div>
                     </div>
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                    <Badge variant="outline" className="bg-orange-50 text-orange-700">
                       <Shield className="w-3 h-3 mr-1" />
-                      Indian
+                      Popular
                     </Badge>
-                  </div>
-                </div>
-
-                <div className="border rounded-lg p-4 opacity-50">
-                  <div className="flex items-center gap-3">
-                    <input type="radio" name="payment" disabled />
-                    <div className="flex-1">
-                      <div className="font-semibold">PhonePe / GPay</div>
-                      <div className="text-sm text-muted-foreground">Quick UPI payments</div>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Coming Soon</span>
                   </div>
                 </div>
               </div>
