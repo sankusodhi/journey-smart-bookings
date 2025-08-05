@@ -3,12 +3,13 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, CreditCard, Shield, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Shield, Clock, CheckCircle2, QrCode } from "lucide-react";
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import CongratulationsModal from "@/components/CongratulationsModal";
+import QRCode from "qrcode";
 
 // Add Razorpay types
 declare global {
@@ -30,6 +31,8 @@ const Payment = () => {
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'razorpay' | 'upi' | 'cards' | 'netbanking'>('razorpay');
+  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [showQRCode, setShowQRCode] = useState(false);
 
   const selectedSeats = searchParams.get('seats')?.split(',') || [];
   const contactInfo = searchParams.get('contact') ? JSON.parse(decodeURIComponent(searchParams.get('contact')!)) : {};
@@ -146,10 +149,34 @@ const Payment = () => {
     razorpay.open();
   };
 
+  const generateUPIQRCode = async () => {
+    const upiString = `upi://pay?pa=demo@paytm&pn=BusBooking&am=${totalAmount}&cu=INR&tn=Bus Booking Payment`;
+    try {
+      const qrCodeDataURL = await QRCode.toDataURL(upiString, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+      setQrCodeData(qrCodeDataURL);
+      setShowQRCode(true);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  };
+
   const processPayment = async () => {
     setProcessing(true);
     
     try {
+      if (selectedPaymentMethod === 'upi') {
+        await generateUPIQRCode();
+        setProcessing(false);
+        return;
+      }
+      
       if (selectedPaymentMethod === 'stripe') {
         await processStripePayment();
       } else {
@@ -476,6 +503,54 @@ const Payment = () => {
                 </Badge>
               </div>
             </Card>
+
+            {/* UPI QR Code Modal */}
+            {showQRCode && (
+              <Card className="p-6 mt-4 border-journey bg-journey/5">
+                <div className="text-center">
+                  <h3 className="font-bold text-lg mb-2 flex items-center justify-center gap-2">
+                    <QrCode className="w-5 h-5 text-journey" />
+                    UPI QR Code Payment
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Scan this QR code with any UPI app (GPay, PhonePe, Paytm)
+                  </p>
+                  
+                  <div className="bg-white p-4 rounded-lg inline-block mb-4">
+                    <img src={qrCodeData} alt="UPI QR Code" className="w-64 h-64" />
+                  </div>
+                  
+                  <div className="space-y-2 text-sm">
+                    <p><strong>Amount:</strong> ₹{totalAmount}</p>
+                    <p><strong>Merchant:</strong> Bus Booking Demo</p>
+                  </div>
+                  
+                  <div className="mt-4 space-y-2">
+                    <Button 
+                      variant="hero" 
+                      className="w-full"
+                      onClick={() => {
+                        setPaymentComplete(true);
+                        setShowCongratulations(true);
+                        toast({
+                          title: "Payment Successful!",
+                          description: "Demo payment completed successfully",
+                        });
+                      }}
+                    >
+                      ✓ Demo Payment Complete
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setShowQRCode(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
