@@ -217,11 +217,16 @@ const SearchResults = () => {
                       <Button 
                         variant="hero" 
                         className="w-full"
-                        onClick={() => navigate(`/payment/${bus.id}`)}
+                        onClick={() => navigate(`/seat-selection/${bus.id}`)}
                       >
-                        Book Now
+                        Select Seats
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={() => navigate(`/bus-details/${bus.id}`)}
+                      >
                         View Details
                       </Button>
                     </div>
