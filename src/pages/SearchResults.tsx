@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Clock, Star, Wifi, Zap, Snowflake, Users, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Clock, Star, Wifi, Zap, Snowflake, Users, Loader2, MapPin, Calendar } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
-import { useRealtimeBuses } from "@/hooks/useRealtimeBuses";
+import { useThirdPartyBuses } from "@/hooks/useThirdPartyBuses";
+import type { ThirdPartyBus } from "@/services/busApiService";
 
 const SearchResults = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedSort, setSelectedSort] = useState("departure");
-  const { buses: realtimeBuses, loading, error } = useRealtimeBuses();
+  
+  // Get search parameters from URL
+  const source = searchParams.get('source') || '';
+  const destination = searchParams.get('destination') || '';
+  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const passengers = parseInt(searchParams.get('passengers') || '1');
+
+  const { buses, loading, error, searchBuses } = useThirdPartyBuses();
+
+  // Search for buses when component mounts or search params change
+  useEffect(() => {
+    if (source && destination) {
+      searchBuses({
+        source,
+        destination,
+        date,
+        passengers,
+      });
+    }
+  }, [source, destination, date, passengers]);
 
   // Helper function to format time
   const formatTime = (dateString: string) => {
@@ -21,14 +42,31 @@ const SearchResults = () => {
     });
   };
 
-  // Helper function to calculate duration
-  const calculateDuration = (departure: string, arrival: string) => {
-    const dep = new Date(departure);
-    const arr = new Date(arrival);
-    const diffMs = arr.getTime() - dep.getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+  // Sort buses based on selected criteria
+  const sortedBuses = [...buses].sort((a, b) => {
+    switch (selectedSort) {
+      case 'price':
+        return a.price - b.price;
+      case 'departure':
+        return new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime();
+      case 'duration':
+        return parseInt(a.duration) - parseInt(b.duration);
+      case 'rating':
+        return b.rating - a.rating;
+      default:
+        return 0;
+    }
+  });
+
+  // Get provider badge color
+  const getProviderBadge = (provider: string) => {
+    const colors = {
+      abhibus: 'bg-blue-100 text-blue-700',
+      redbus: 'bg-red-100 text-red-700',
+      internal: 'bg-green-100 text-green-700',
+      mock: 'bg-purple-100 text-purple-700',
+    };
+    return colors[provider as keyof typeof colors] || 'bg-gray-100 text-gray-700';
   };
 
   if (loading) {
@@ -66,10 +104,24 @@ const SearchResults = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Live Bus Routes</h1>
-              <p className="text-white/90">Real-time data • {realtimeBuses.length} buses found</p>
+              <h1 className="text-2xl font-bold mb-2">Available Buses</h1>
+              <div className="flex items-center gap-4 text-white/90">
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  {source} → {destination}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(date).toLocaleDateString()}
+                </div>
+                <div>{buses.length} buses found</div>
+              </div>
             </div>
-            <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+            <Button 
+              variant="outline" 
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              onClick={() => navigate('/')}
+            >
               Modify Search
             </Button>
           </div>
@@ -132,7 +184,7 @@ const SearchResults = () => {
           <div className="lg:col-span-3">
             {/* Sort Options */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">{realtimeBuses.length} buses found</h2>
+              <h2 className="text-xl font-bold">{buses.length} buses found from multiple providers</h2>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sort by:</span>
                 <Button 
@@ -149,57 +201,73 @@ const SearchResults = () => {
                 >
                   Price
                 </Button>
+                <Button 
+                  variant={selectedSort === "duration" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setSelectedSort("duration")}
+                >
+                  Duration
+                </Button>
+                <Button 
+                  variant={selectedSort === "rating" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setSelectedSort("rating")}
+                >
+                  Rating
+                </Button>
               </div>
             </div>
 
             {/* Bus Cards */}
             <div className="space-y-4">
-              {realtimeBuses.map((bus) => (
+              {sortedBuses.map((bus) => (
                 <Card key={bus.id} className="p-6 hover:shadow-glow transition-all duration-300">
                   <div className="grid md:grid-cols-6 gap-4 items-center">
                     {/* Operator & Route */}
                     <div className="md:col-span-2">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-bold text-lg">{bus.bus_name}</h3>
-                        <Badge variant="secondary" className="bg-green-100 text-green-700">
-                          Live
+                        <h3 className="font-bold text-lg">{bus.operator}</h3>
+                        <Badge variant="secondary" className={getProviderBadge(bus.provider)}>
+                          {bus.provider.toUpperCase()}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {bus.busType}
                         </Badge>
                       </div>
                       <p className="text-muted-foreground mb-1">{bus.source} → {bus.destination}</p>
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold">4.2</span>
-                        <span className="text-muted-foreground">(Real-time)</span>
+                        <span className="font-semibold">{bus.rating}</span>
+                        <span className="text-muted-foreground">({bus.reviews} reviews)</span>
                       </div>
                     </div>
 
                     {/* Timing */}
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{formatTime(bus.departure_time)}</div>
+                      <div className="text-2xl font-bold">{formatTime(bus.departureTime)}</div>
                       <div className="text-sm text-muted-foreground">{bus.source}</div>
                       <div className="my-2">
                         <Clock className="w-4 h-4 mx-auto text-muted-foreground" />
-                        <div className="text-sm text-muted-foreground">{calculateDuration(bus.departure_time, bus.arrival_time)}</div>
+                        <div className="text-sm text-muted-foreground">{bus.duration}</div>
                       </div>
-                      <div className="text-2xl font-bold">{formatTime(bus.arrival_time)}</div>
+                      <div className="text-2xl font-bold">{formatTime(bus.arrivalTime)}</div>
                       <div className="text-sm text-muted-foreground">{bus.destination}</div>
                     </div>
 
                     {/* Amenities */}
                     <div>
                       <div className="flex flex-wrap gap-2 mb-2">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Wifi className="w-4 h-4" />
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Zap className="w-4 h-4" />
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Snowflake className="w-4 h-4" />
-                        </div>
+                        {bus.amenities.slice(0, 3).map((amenity, index) => (
+                          <div key={index} className="flex items-center gap-1 text-sm text-muted-foreground">
+                            {amenity === 'WiFi' && <Wifi className="w-4 h-4" />}
+                            {amenity === 'Charging Point' && <Zap className="w-4 h-4" />}
+                            {amenity === 'AC' && <Snowflake className="w-4 h-4" />}
+                            <span className="text-xs">{amenity}</span>
+                          </div>
+                        ))}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Real-time tracking
+                        {bus.amenities.length > 3 ? `+${bus.amenities.length - 3} more` : 'All amenities'}
                       </div>
                     </div>
 
@@ -208,7 +276,7 @@ const SearchResults = () => {
                       <div className="text-2xl font-bold">₹{bus.price}</div>
                       <div className="text-sm text-muted-foreground mt-1">
                         <Users className="w-4 h-4 inline mr-1" />
-                        Available
+                        {bus.availableSeats} seats left
                       </div>
                     </div>
 
@@ -217,15 +285,16 @@ const SearchResults = () => {
                       <Button 
                         variant="hero" 
                         className="w-full"
-                        onClick={() => navigate(`/seat-selection/${bus.id}`)}
+                        onClick={() => navigate(`/seat-selection/${bus.id}?provider=${bus.provider}`)}
+                        disabled={bus.availableSeats === 0}
                       >
-                        Select Seats
+                        {bus.availableSeats === 0 ? 'Sold Out' : 'Select Seats'}
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         className="w-full"
-                        onClick={() => navigate(`/bus-details/${bus.id}`)}
+                        onClick={() => navigate(`/bus-details/${bus.id}?provider=${bus.provider}`)}
                       >
                         View Details
                       </Button>
@@ -235,10 +304,13 @@ const SearchResults = () => {
               ))}
             </div>
 
-            {realtimeBuses.length === 0 && (
+            {buses.length === 0 && !loading && (
               <div className="text-center py-20">
-                <p className="text-muted-foreground mb-4">No buses found for your search</p>
-                <Button onClick={() => window.location.reload()}>Refresh</Button>
+                <p className="text-muted-foreground mb-4">No buses found for this route</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Try searching for a different route or date</p>
+                  <Button onClick={() => navigate('/')}>Search Again</Button>
+                </div>
               </div>
             )}
           </div>

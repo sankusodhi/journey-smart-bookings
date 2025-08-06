@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
-import { MapPin, Calendar, Users, Search } from "lucide-react";
-import { Input } from "./ui/input";
+import { Search } from "lucide-react";
+import BusSearchForm from "./BusSearchForm";
 import heroImage from "@/assets/hero-bus.jpg";
 
 const HeroSection = () => {
@@ -60,66 +60,14 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Right Side - Booking Form */}
-          <div className="lg:max-w-md mx-auto w-full">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-glow p-8 space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-foreground">Book Your Journey</h2>
-                <p className="text-muted-foreground">Find and book bus tickets instantly</p>
+          {/* Right Side - Enhanced Search Form */}
+          <div className="lg:max-w-lg mx-auto w-full">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-glow p-6">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-foreground">Search Multi-Provider Buses</h2>
+                <p className="text-muted-foreground">Compare prices from Abhibus, RedBus & more</p>
               </div>
-
-              <div className="space-y-4">
-                {/* From & To */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">From</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input placeholder="Delhi" className="pl-10" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">To</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input placeholder="Mumbai" className="pl-10" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Date & Passengers */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Date</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input type="date" className="pl-10" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Passengers</label>
-                    <div className="relative">
-                      <Users className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                      <Input placeholder="1" className="pl-10" />
-                    </div>
-                  </div>
-                </div>
-
-                <Button variant="hero" size="lg" className="w-full text-lg py-4" onClick={() => window.location.href = '/search-results'}>
-                  <Search className="w-5 h-5 mr-2" />
-                  Search Buses
-                </Button>
-              </div>
-
-              {/* Quick Links */}
-              <div className="pt-4 border-t border-border">
-                <p className="text-sm text-muted-foreground mb-3">Popular Routes:</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm">Delhi → Mumbai</Button>
-                  <Button variant="outline" size="sm">Bangalore → Chennai</Button>
-                  <Button variant="outline" size="sm">Pune → Goa</Button>
-                </div>
-              </div>
+              <BusSearchForm />
             </div>
           </div>
         </div>
