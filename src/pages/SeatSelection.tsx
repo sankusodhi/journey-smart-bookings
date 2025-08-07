@@ -17,6 +17,14 @@ const SeatSelection = () => {
   const [bookedSeats, setBookedSeats] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Extract numeric ID from bus ID format (e.g., "internal_1" -> "1")
+  const getNumericBusId = (id: string) => {
+    if (id.startsWith('internal_')) {
+      return parseInt(id.replace('internal_', ''));
+    }
+    return parseInt(id);
+  };
+
   useEffect(() => {
     fetchBusData();
     fetchBookedSeats();
@@ -24,10 +32,21 @@ const SeatSelection = () => {
 
   const fetchBusData = async () => {
     try {
+      const numericBusId = getNumericBusId(busId!);
+      
+      if (isNaN(numericBusId)) {
+        toast({
+          title: "Error",
+          description: "Invalid bus ID format",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('buses')
         .select('*')
-        .eq('id', parseInt(busId!))
+        .eq('id', numericBusId)
         .single();
 
       if (error) {
@@ -49,10 +68,17 @@ const SeatSelection = () => {
 
   const fetchBookedSeats = async () => {
     try {
+      const numericBusId = getNumericBusId(busId!);
+      
+      if (isNaN(numericBusId)) {
+        console.error('Invalid bus ID for fetching bookings');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('bus_id', parseInt(busId!));
+        .eq('bus_id', numericBusId);
 
       if (error) {
         console.error('Error fetching bookings:', error);
