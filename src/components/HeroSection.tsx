@@ -62,13 +62,11 @@ const HeroSection = () => {
 
           {/* Right Side - Enhanced Search Form */}
           <div className="lg:max-w-lg mx-auto w-full">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-glow p-6">
-              <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-foreground">Search Multi-Provider Buses</h2>
-                <p className="text-muted-foreground">Compare prices from Abhibus, RedBus & more</p>
-              </div>
-              <BusSearchForm />
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Search Multi-Provider Buses</h2>
+              <p className="text-white/80">Compare prices from Abhibus, RedBus & more</p>
             </div>
+            <BusSearchForm />
           </div>
         </div>
       </div>

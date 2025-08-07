@@ -96,8 +96,8 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <Card className="p-8 shadow-elegant bg-card/95 backdrop-blur-sm">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <Card className="p-6 shadow-elegant bg-card/95 backdrop-blur-sm border border-border/20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Source */}
           <div className="space-y-2">
             <Label htmlFor="source" className="flex items-center gap-2">
@@ -175,11 +175,11 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
         </div>
 
         {/* Search Button */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <Button
             onClick={handleSearch}
             disabled={loading}
-            className="px-8 py-3 h-12 text-lg font-semibold bg-gradient-primary hover:opacity-90"
+            className="px-6 py-2 h-10 text-base font-semibold bg-gradient-primary hover:opacity-90 w-full sm:w-auto"
           >
             {loading ? (
               <>
