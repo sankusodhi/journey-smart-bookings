@@ -128,12 +128,14 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-journey': 'var(--gradient-journey)',
 				'gradient-trust': 'var(--gradient-trust)',
 				'gradient-sunset': 'var(--gradient-sunset)'
 			},
 			boxShadow: {
 				'primary': 'var(--shadow-primary)',
+				'elegant': 'var(--shadow-elegant)',
 				'glow': 'var(--shadow-glow)',
 				'journey': 'var(--shadow-journey)'
 			}

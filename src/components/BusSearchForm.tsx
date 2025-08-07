@@ -95,12 +95,12 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <Card className="p-6 shadow-elegant bg-card/95 backdrop-blur-sm border border-border/20">
+    <div className="w-full">
+      <Card className="p-6 shadow-elegant bg-card backdrop-blur-sm border-border/20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Source */}
           <div className="space-y-2">
-            <Label htmlFor="source" className="flex items-center gap-2">
+            <Label htmlFor="source" className="flex items-center gap-2 text-sm font-medium">
               <MapPin className="w-4 h-4" />
               From
             </Label>
@@ -109,13 +109,13 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
               placeholder="Source city"
               value={searchData.source}
               onChange={(e) => handleInputChange("source", e.target.value)}
-              className="h-12"
+              className="h-11 bg-background border-border"
             />
           </div>
 
           {/* Destination */}
           <div className="space-y-2">
-            <Label htmlFor="destination" className="flex items-center gap-2">
+            <Label htmlFor="destination" className="flex items-center gap-2 text-sm font-medium">
               <MapPin className="w-4 h-4" />
               To
             </Label>
@@ -125,13 +125,13 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
                 placeholder="Destination city"
                 value={searchData.destination}
                 onChange={(e) => handleInputChange("destination", e.target.value)}
-                className="h-12"
+                className="h-11 bg-background border-border pr-10"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 h-8 w-8"
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 h-8 w-8 hover:bg-muted"
                 onClick={swapLocations}
                 title="Swap locations"
               >
@@ -142,7 +142,7 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
 
           {/* Date */}
           <div className="space-y-2">
-            <Label htmlFor="date" className="flex items-center gap-2">
+            <Label htmlFor="date" className="flex items-center gap-2 text-sm font-medium">
               <CalendarDays className="w-4 h-4" />
               Date
             </Label>
@@ -152,13 +152,13 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
               value={searchData.date}
               min={new Date().toISOString().split('T')[0]}
               onChange={(e) => handleInputChange("date", e.target.value)}
-              className="h-12"
+              className="h-11 bg-background border-border"
             />
           </div>
 
           {/* Passengers */}
           <div className="space-y-2">
-            <Label htmlFor="passengers" className="flex items-center gap-2">
+            <Label htmlFor="passengers" className="flex items-center gap-2 text-sm font-medium">
               <Users className="w-4 h-4" />
               Passengers
             </Label>
@@ -169,7 +169,7 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
               max="6"
               value={searchData.passengers}
               onChange={(e) => handleInputChange("passengers", parseInt(e.target.value) || 1)}
-              className="h-12"
+              className="h-11 bg-background border-border"
             />
           </div>
         </div>
@@ -179,16 +179,16 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
           <Button
             onClick={handleSearch}
             disabled={loading}
-            className="px-6 py-2 h-10 text-base font-semibold bg-gradient-primary hover:opacity-90 w-full sm:w-auto"
+            className="px-6 py-2 h-11 font-semibold bg-gradient-primary hover:opacity-90 text-primary-foreground min-w-[140px]"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Searching...
               </>
             ) : (
               <>
-                <Search className="w-5 h-5 mr-2" />
+                <Search className="w-4 h-4 mr-2" />
                 Search Buses
               </>
             )}
@@ -198,13 +198,13 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
         {/* Popular Routes */}
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3">Popular Routes</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {popularRoutes.map((route, index) => (
               <Button
                 key={index}
                 variant="outline"
                 size="sm"
-                className="text-xs h-8 px-3"
+                className="text-xs h-8 px-3 bg-background hover:bg-muted border-border"
                 onClick={() => handleRouteClick(route)}
               >
                 {route.from} → {route.to}
