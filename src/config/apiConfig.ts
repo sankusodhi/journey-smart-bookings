@@ -40,15 +40,9 @@ export const apiConfig: ApiConfig = {
 };
 
 // Environment variable mappings (for production)
-if (typeof window !== 'undefined') {
-  // Client-side environment variables (use with caution)
-  apiConfig.abhibus.apiKey = (window as any).__ABHIBUS_API_KEY__ || null;
-  apiConfig.redbus.apiKey = (window as any).__REDBUS_API_KEY__ || null;
-} else {
-  // Server-side environment variables (for SSR/Node.js)
-  apiConfig.abhibus.apiKey = process.env.REACT_APP_ABHIBUS_API_KEY || null;
-  apiConfig.redbus.apiKey = process.env.REACT_APP_REDBUS_API_KEY || null;
-}
+// Use Vite's environment variable system
+apiConfig.abhibus.apiKey = import.meta.env.VITE_ABHIBUS_API_KEY || null;
+apiConfig.redbus.apiKey = import.meta.env.VITE_REDBUS_API_KEY || null;
 
 // Enable APIs only if keys are available
 apiConfig.abhibus.enabled = !!apiConfig.abhibus.apiKey;

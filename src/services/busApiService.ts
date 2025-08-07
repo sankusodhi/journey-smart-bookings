@@ -59,8 +59,8 @@ class BusApiService {
   constructor() {
     // In production, these would come from environment variables
     // For development, we'll use mock data when keys are not available
-    this.abhiBusApiKey = process.env.REACT_APP_ABHIBUS_API_KEY || null;
-    this.redBusApiKey = process.env.REACT_APP_REDBUS_API_KEY || null;
+    this.abhiBusApiKey = import.meta.env.VITE_ABHIBUS_API_KEY || null;
+    this.redBusApiKey = import.meta.env.VITE_REDBUS_API_KEY || null;
   }
 
   // Search buses from all available providers
