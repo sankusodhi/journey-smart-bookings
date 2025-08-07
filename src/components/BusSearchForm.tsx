@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { CityAutocomplete } from "@/components/ui/city-autocomplete";
 import { CalendarDays, MapPin, Users, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -104,12 +105,11 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
               <MapPin className="w-4 h-4" />
               From
             </Label>
-            <Input
+            <CityAutocomplete
               id="source"
-              placeholder="Source city"
               value={searchData.source}
-              onChange={(e) => handleInputChange("source", e.target.value)}
-              className="h-11 bg-background border-border"
+              onChange={(value) => handleInputChange("source", value)}
+              placeholder="Source city"
             />
           </div>
 
@@ -120,18 +120,18 @@ const BusSearchForm = ({ onSearch }: BusSearchFormProps) => {
               To
             </Label>
             <div className="relative">
-              <Input
+              <CityAutocomplete
                 id="destination"
-                placeholder="Destination city"
                 value={searchData.destination}
-                onChange={(e) => handleInputChange("destination", e.target.value)}
-                className="h-11 bg-background border-border pr-10"
+                onChange={(value) => handleInputChange("destination", value)}
+                placeholder="Destination city"
+                className="pr-10"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 h-8 w-8 hover:bg-muted"
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-1 h-8 w-8 hover:bg-muted z-10"
                 onClick={swapLocations}
                 title="Swap locations"
               >
